@@ -1,0 +1,148 @@
+name: Build AdShield IPA (TrollStore / Unsigned)
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      build_config:
+        description: 'Build configuration'
+        required: true
+        default: 'release'
+        type: choice
+        options:
+          - debug
+          - release
+
+jobs:
+  build:
+    # macOS 15 runner image ships Xcode 16.0–16.4 and 26.x, with Xcode 16.4 as
+    # the default (see actions/runner-images macos-15-arm64 Readme). Xcode 16.4
+    # fully supports our iOS 15.0 deployment target / Swift 5.
+    # Public repos get free macOS runner minutes
+    runs-on: macos-15
+
+    env:
+      BUILD_CONFIG: ${{ github.event.inputs.build_config || 'release' }}
+      APP_NAME: AdShield
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Select Xcode version
+        # Do NOT hardcode an Xcode path — it breaks whenever the runner image
+        # changes its bundled Xcode versions (this repo previously pinned
+        # Xcode_15.4.app, which does not exist on the macos-15 image).
+        # Prefer Xcode 16.4 (image default, known-good for iOS 15 + Swift 5);
+        # if it is ever removed from the image, fall back to the image default.
+        run: |
+          set -euo pipefail
+          if [ -d /Applications/Xcode_16.4.app ]; then
+            sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
+          else
+            echo "Xcode 16.4 not installed; keeping runner default: $(xcode-select -p)"
+          fi
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Verify project scheme
+        # Diagnostic only — must never fail the run here. 2>&1 captures the
+        # xcodebuild crash trace (SIGABRT / NSException text goes to stderr),
+        # tee writes it to build/list.log, which the build-logs artifact
+        # step uploads on any later failure.
+        run: |
+          mkdir -p ./build
+          echo "Available targets and schemes:"
+          xcodebuild -project AdShield.xcodeproj -list 2>&1 | tee ./build/list.log || \
+            echo "::warning::xcodebuild -list failed (exit $?); crash trace saved in build-logs artifact; continuing to archive"
+
+      - name: Build archive (no code signing)
+        run: |
+          set -euo pipefail
+          mkdir -p ./build
+
+          xcodebuild archive \
+            -project AdShield.xcodeproj \
+            -scheme AdShield \
+            -configuration "$BUILD_CONFIG" \
+            -archivePath "./build/${APP_NAME}.xcarchive" \
+            -destination "generic/platform=iOS" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_IDENTITY="" \
+            2>&1 | tee ./build/archive.log
+
+      - name: Verify archive contents
+        run: |
+          set -euo pipefail
+          ARCHIVE_APP="./build/${APP_NAME}.xcarchive/Products/Applications/${APP_NAME}.app"
+
+          if [ ! -d "$ARCHIVE_APP" ]; then
+            echo "ERROR: Archived app not found at $ARCHIVE_APP"
+            echo "Contents of archive Products/Applications:"
+            ls -la "./build/${APP_NAME}.xcarchive/Products/Applications/" || true
+            exit 1
+          fi
+
+          echo "Main app archived successfully."
+          echo "App bundle contents:"
+          ls -la "$ARCHIVE_APP"
+
+          # Verify Extension is embedded
+          EXTENSION_PATH="$ARCHIVE_APP/PlugIns/AdShieldExtension.appex"
+          if [ -d "$EXTENSION_PATH" ]; then
+            echo ""
+            echo "Extension found in archive: $EXTENSION_PATH"
+            ls -la "$EXTENSION_PATH"
+          else
+            echo ""
+            echo "WARNING: Extension not found in expected PlugIns path. Searching archive..."
+            find "./build/${APP_NAME}.xcarchive" -name "*.appex" || true
+          fi
+
+          # Verify entitlements are preserved in the unsigned app
+          echo ""
+          echo "Main app entitlements (embedded):"
+          if [ -f "$ARCHIVE_APP/AdShield.entitlements" ]; then
+            cat "$ARCHIVE_APP/AdShield.entitlements"
+          else
+            echo "No standalone entitlements file in bundle (entitlements may be embedded in binary metadata)."
+          fi
+
+      - name: Package unsigned IPA
+        run: |
+          set -euo pipefail
+
+          ARCHIVE_APP="./build/${APP_NAME}.xcarchive/Products/Applications/${APP_NAME}.app"
+
+          # Create Payload directory and copy app
+          rm -rf ./build/Payload
+          mkdir -p ./build/Payload
+          cp -R "$ARCHIVE_APP" ./build/Payload/
+
+          # Package as IPA
+          cd ./build
+          zip -r "${APP_NAME}-unsigned.ipa" Payload
+          cd ..
+
+          echo ""
+          echo "=== Unsigned IPA packaged successfully ==="
+          ls -lh "./build/${APP_NAME}-unsigned.ipa"
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AdShield-IPA-Unsigned
+          path: ./build/AdShield-unsigned.ipa
+          retention-days: 90
+
+      - name: Upload build logs (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: ./build/*.log
+          retention-days: 30
