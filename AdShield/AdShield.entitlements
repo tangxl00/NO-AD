@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- App Group for sharing data between main app and extension -->
+    <key>com.apple.security.application-groups</key>
+    <array>
+        <string>group.com.YOUR_ORG.AdShield</string>
+    </array>
+
+    <!-- Network Extensions entitlement with dns-proxy value.
+         The main app needs this so the system can activate the extension.
+         Enable "Network Extensions > DNS Proxy" capability in the Apple
+         Developer portal (Identifiers -> your App ID -> Capabilities).
+         Requires a paid Apple Developer Program membership. -->
+    <key>com.apple.developer.networking.networkextension</key>
+    <array>
+        <string>dns-proxy</string>
+    </array>
+</dict>
+</plist>
