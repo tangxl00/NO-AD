@@ -50,7 +50,7 @@
 /* Begin PBXContainerItemProxy section */
 		9A3E8B5C1C2D4E3F8B7D9A0E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = A1D0F2B4C3E5478091AB0001 /* AdShield.xcodeproj */;
+			containerPortal = 73FEE9AC557D462EB3C9B37F /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 32E0A3A6F5C34959824D2512;
 			remoteInfo = AdShieldExtension;
@@ -72,7 +72,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		A1D0F2B4C3E5478091AB0001 /* AdShield.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = AdShield.xcodeproj; sourceTree = "<group>"; };
 		A1D0F2B4C3E5478091AB0002 /* AdShield.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AdShield.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F18F0EEC4D9F4509BC7FFC4A /* AdShieldExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = AdShieldExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 
