@@ -28,7 +28,7 @@ struct OnboardingView: View {
             VStack(spacing: 16) {
                 if currentStep == steps.count - 1 {
                     Button(action: completeOnboarding) {
-                        Text("Get Started")
+                        Text("开始使用")
                             .font(.headline)
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
@@ -38,7 +38,7 @@ struct OnboardingView: View {
                     }
                 } else {
                     Button(action: { currentStep += 1 }) {
-                        Text("Next")
+                        Text("下一步")
                             .font(.headline)
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
@@ -49,7 +49,7 @@ struct OnboardingView: View {
                 }
                 
                 Button(action: { onboardingCompleted = true }) {
-                    Text("Skip")
+                    Text("跳过")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
@@ -74,23 +74,23 @@ enum OnboardingStep: CaseIterable {
     
     var title: String {
         switch self {
-        case .welcome: return "Welcome to AdShield"
-        case .howItWorks: return "How It Works"
-        case .privacy: return "Privacy First"
-        case .permissions: return "One More Step"
+        case .welcome: return "欢迎使用 AdShield"
+        case .howItWorks: return "工作原理"
+        case .privacy: return "隐私优先"
+        case .permissions: return "最后一步"
         }
     }
     
     var description: String {
         switch self {
         case .welcome:
-            return "Block ads and trackers at the DNS level. Enjoy a cleaner, faster, and more private browsing experience on your iPhone."
+            return "在 DNS 层面拦截广告和跟踪器，让你的 iPhone 浏览体验更干净、更快速、更私密。"
         case .howItWorks:
-            return "AdShield runs as a DNS proxy on your device. When an app tries to load an ad, we intercept the domain lookup and block it — before any content downloads."
+            return "AdShield 在你的设备上以 DNS 代理方式运行。当应用尝试加载广告时，我们会在域名解析阶段直接拦截——内容还没开始下载就已被阻止。"
         case .privacy:
-            return "All filtering happens locally on your device. Your DNS queries never leave your phone for ad-blocking purposes. No accounts, no tracking, no data collection."
+            return "所有过滤都在你的设备本地完成，用于广告拦截的 DNS 查询不会离开手机。无账号、无跟踪、无数据收集。"
         case .permissions:
-            return "iOS requires VPN permission to route DNS traffic. Don't worry — we're not a VPN. Your traffic doesn't go through remote servers. Tap Get Started to authorize."
+            return "iOS 需要 VPN 权限来接管 DNS 流量。别担心——我们并不是真正的 VPN，你的流量不会经过任何远程服务器。点击「开始使用」完成授权。"
         }
     }
     

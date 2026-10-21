@@ -15,12 +15,12 @@ struct BlockingLogView: View {
     var body: some View {
         NavigationView {
             List {
-                Section(header: Text("Daily Trend (Last 7 Days)")) {
+                Section(header: Text("每日趋势（近 7 天）")) {
                     DailyTrendView(data: store.dailyCountsForLast(days: 7))
                         .frame(height: 120)
                 }
                 
-                Section(header: Text("Top Blocked Domains")) {
+                Section(header: Text("拦截最多的域名")) {
                     ForEach(store.topDomains(limit: 10), id: \.domain) { item in
                         HStack {
                             Text(item.domain)
@@ -34,13 +34,13 @@ struct BlockingLogView: View {
                     }
                 }
                 
-                Section(header: Text("Recent Blocks")) {
+                Section(header: Text("最近拦截")) {
                     ForEach(store.logs.prefix(50)) { log in
                         LogRow(log: log)
                     }
                 }
             }
-            .navigationTitle("Blocking Logs")
+            .navigationTitle("拦截日志")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { Task { await store.clearAllLogs() } }) {
@@ -68,7 +68,7 @@ struct LogRow: View {
             }
             
             HStack {
-                Text(log.ruleType.rawValue)
+                Text(ruleTypeName(log.ruleType))
                     .font(.caption2)
                     .foregroundColor(.secondary)
                 Text("• \(log.action.rawValue)")
@@ -77,6 +77,15 @@ struct LogRow: View {
             }
         }
         .padding(.vertical, 2)
+    }
+}
+
+/// 本地化规则类型标签（rawValue 是日志存储值，不可改动）
+private func ruleTypeName(_ type: BlockingLog.RuleType) -> String {
+    switch type {
+    case .antiAD: return "anti-AD 规则"
+    case .custom: return "自定义规则"
+    case .userBlacklist: return "用户黑名单"
     }
 }
 

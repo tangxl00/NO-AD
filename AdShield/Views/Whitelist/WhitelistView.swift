@@ -25,7 +25,7 @@ struct WhitelistView: View {
             List {
                 Section {
                     HStack {
-                        TextField("Add domain...", text: $newDomain)
+                        TextField("添加域名…", text: $newDomain)
                             .autocapitalization(.none)
                             .keyboardType(.URL)
                         
@@ -37,14 +37,14 @@ struct WhitelistView: View {
                     }
                 }
                 
-                Section(header: Text("\(filteredItems.count) Whitelisted Domains")) {
+                Section(header: Text("已加白名单的域名（\(filteredItems.count)）")) {
                     ForEach(filteredItems) { item in
                         WhitelistItemRow(item: item)
                     }
                     .onDelete(perform: deleteItem)
                 }
             }
-            .navigationTitle("Whitelist")
+            .navigationTitle("白名单")
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
         }
     }
@@ -76,7 +76,7 @@ struct WhitelistItemRow: View {
                 .font(.body)
             
             HStack {
-                Text(item.source.rawValue.replacingOccurrences(of: "_", with: " ").capitalized)
+                Text(whitelistSourceName(item.source))
                     .font(.caption2)
                     .foregroundColor(.secondary)
                 
@@ -89,5 +89,14 @@ struct WhitelistItemRow: View {
             }
         }
         .padding(.vertical, 2)
+    }
+}
+
+/// 本地化白名单来源标签（rawValue 是 JSON 存储值，不可改动）
+private func whitelistSourceName(_ source: WhitelistItem.Source) -> String {
+    switch source {
+    case .userManual: return "手动添加"
+    case .feedbackDriven: return "误杀反馈"
+    case .builtin: return "内置规则"
     }
 }

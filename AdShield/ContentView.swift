@@ -28,27 +28,27 @@ struct MainTabView: View {
         TabView {
             DashboardView()
                 .tabItem {
-                    Label("Dashboard", systemImage: "shield.fill")
+                    Label("仪表盘", systemImage: "shield.fill")
                 }
             
             RuleManagementView()
                 .tabItem {
-                    Label("Rules", systemImage: "list.bullet")
+                    Label("规则", systemImage: "list.bullet")
                 }
             
             WhitelistView()
                 .tabItem {
-                    Label("Whitelist", systemImage: "checkmark.shield")
+                    Label("白名单", systemImage: "checkmark.shield")
                 }
             
             BlockingLogView()
                 .tabItem {
-                    Label("Logs", systemImage: "chart.bar.fill")
+                    Label("日志", systemImage: "chart.bar.fill")
                 }
             
             FeedbackListView()
                 .tabItem {
-                    Label("Feedback", systemImage: "exclamationmark.bubble")
+                    Label("反馈", systemImage: "exclamationmark.bubble")
                 }
         }
     }

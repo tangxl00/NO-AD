@@ -48,7 +48,7 @@ struct DashboardView: View {
                 .foregroundColor(proxyManager.isEnabled ? .green : .gray)
                 .animation(.easeInOut, value: proxyManager.isEnabled)
             
-            Text(proxyManager.isEnabled ? "DNS Filtering Active" : "DNS Filtering Off")
+            Text(proxyManager.isEnabled ? "DNS 过滤已开启" : "DNS 过滤已关闭")
                 .font(.title2)
                 .fontWeight(.semibold)
             
@@ -61,7 +61,7 @@ struct DashboardView: View {
             .tint(.green)
             
             if proxyManager.isInstalling {
-                ProgressView("Configuring...")
+                ProgressView("正在配置…")
             }
             
             if let error = proxyManager.lastError {
@@ -81,18 +81,18 @@ struct DashboardView: View {
     
     private var statsCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Today")
+            Text("今日")
                 .font(.headline)
             
             HStack {
-                StatItem(value: "\(logStore.stats.todayBlocked)", label: "Blocked", color: .red)
+                StatItem(value: "\(logStore.stats.todayBlocked)", label: "已拦截", color: .red)
                 Spacer()
-                StatItem(value: "\(logStore.stats.totalBlocked)", label: "Total", color: .blue)
+                StatItem(value: "\(logStore.stats.totalBlocked)", label: "累计", color: .blue)
             }
             
             if !logStore.topDomains(limit: 3).isEmpty {
                 Divider()
-                Text("Top Blocked Domains")
+                Text("拦截最多的域名")
                     .font(.caption)
                     .foregroundColor(.secondary)
                 
@@ -118,15 +118,15 @@ struct DashboardView: View {
     
     private var quickActionsCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Quick Actions")
+            Text("快捷操作")
                 .font(.headline)
             
             HStack(spacing: 12) {
-                QuickActionButton(title: "Shake Guide", icon: "hand.tap") {
+                QuickActionButton(title: "摇一摇广告指南", icon: "hand.tap") {
                     showingShakeGuide = true
                 }
                 
-                QuickActionButton(title: "Update Rules", icon: "arrow.clockwise") {
+                QuickActionButton(title: "更新规则", icon: "arrow.clockwise") {
                     Task {
                         await updateRules()
                     }
@@ -142,12 +142,12 @@ struct DashboardView: View {
     
     private var statusCard: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Status")
+            Text("状态")
                 .font(.headline)
             
-            StatusRow(label: "Rule Version", value: UserDefaults.standard.string(forKey: UserDefaultsKeys.ruleVersion) ?? "Unknown")
-            StatusRow(label: "Last Update", value: lastUpdateText)
-            StatusRow(label: "Rule Entries", value: "\(UserDefaults.standard.integer(forKey: UserDefaultsKeys.ruleEntryCount))")
+            StatusRow(label: "规则版本", value: UserDefaults.standard.string(forKey: UserDefaultsKeys.ruleVersion) ?? "未知")
+            StatusRow(label: "上次更新", value: lastUpdateText)
+            StatusRow(label: "规则条数", value: "\(UserDefaults.standard.integer(forKey: UserDefaultsKeys.ruleEntryCount))")
         }
         .padding()
         .background(Color(.systemGray6))
@@ -157,9 +157,10 @@ struct DashboardView: View {
     private var lastUpdateText: String {
         if let date = UserDefaults.standard.object(forKey: UserDefaultsKeys.lastRuleUpdateTime) as? Date {
             let formatter = RelativeDateTimeFormatter()
+            formatter.locale = Locale(identifier: "zh_CN")
             return formatter.localizedString(for: date, relativeTo: Date())
         }
-        return "Never"
+        return "从未更新"
     }
     
     private func updateRules() async {

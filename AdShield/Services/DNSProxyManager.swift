@@ -30,7 +30,7 @@ public final class DNSProxyManager: ObservableObject {
         NEDNSProxyManager.shared().loadFromPreferences { [weak self] error in
             Task { @MainActor in
                 if let error = error {
-                    self?.lastError = "Failed to load preferences: \(error.localizedDescription)"
+                    self?.lastError = "加载配置失败：\(error.localizedDescription)"
                     return
                 }
                 let manager = NEDNSProxyManager.shared()
@@ -56,7 +56,7 @@ public final class DNSProxyManager: ObservableObject {
         providerProtocol.includeAllNetworks = false
         
         manager.providerProtocol = providerProtocol
-        manager.localizedDescription = "AdShield DNS Proxy"
+        manager.localizedDescription = "AdShield DNS 广告拦截"
         
         do {
             try await manager.saveToPreferences()
@@ -65,7 +65,7 @@ public final class DNSProxyManager: ObservableObject {
             try await manager.saveToPreferences()
             isEnabled = true
         } catch {
-            lastError = "Failed to enable DNS Proxy: \(error.localizedDescription)"
+            lastError = "开启 DNS 代理失败：\(error.localizedDescription)"
             isEnabled = false
         }
     }
@@ -80,7 +80,7 @@ public final class DNSProxyManager: ObservableObject {
             try await manager.saveToPreferences()
             isEnabled = false
         } catch {
-            lastError = "Failed to disable DNS Proxy: \(error.localizedDescription)"
+            lastError = "关闭 DNS 代理失败：\(error.localizedDescription)"
         }
     }
     
@@ -102,7 +102,7 @@ public final class DNSProxyManager: ObservableObject {
             try await manager.loadFromPreferences()
             isEnabled = manager.isEnabled
         } catch {
-            lastError = "Failed to refresh status: \(error.localizedDescription)"
+            lastError = "刷新状态失败：\(error.localizedDescription)"
         }
     }
 }

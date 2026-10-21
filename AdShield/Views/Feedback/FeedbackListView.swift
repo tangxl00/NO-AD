@@ -20,7 +20,7 @@ struct FeedbackListView: View {
             List {
                 Section {
                     Button(action: { showingAddFeedback = true }) {
-                        Label("Report False Positive", systemImage: "plus")
+                        Label("报告误杀", systemImage: "plus")
                     }
                 }
                 
@@ -35,7 +35,7 @@ struct FeedbackListView: View {
                     }
                 }
             }
-            .navigationTitle("Feedback")
+            .navigationTitle("反馈")
             .sheet(isPresented: $showingAddFeedback) {
                 AddFeedbackSheet(
                     domain: $newDomain,
@@ -49,11 +49,11 @@ struct FeedbackListView: View {
     
     private func statusDisplayName(_ status: FeedbackStatus) -> String {
         switch status {
-        case .pending: return "Pending"
-        case .whitelisted: return "Whitelisted"
-        case .ignored: return "Ignored"
-        case .reportedUpstream: return "Reported Upstream"
-        case .resolved: return "Resolved"
+        case .pending: return "待处理"
+        case .whitelisted: return "已加白"
+        case .ignored: return "已忽略"
+        case .reportedUpstream: return "已上报"
+        case .resolved: return "已解决"
         }
     }
     
@@ -100,7 +100,7 @@ struct FeedbackRow: View {
                     .foregroundColor(.secondary)
                 
                 if let category = item.reasonCategory {
-                    Text("• \(category.rawValue.replacingOccurrences(of: "_", with: " "))")
+                    Text("• \(categoryDisplayName(category))")
                         .font(.caption2)
                         .foregroundColor(.secondary)
                 }
@@ -108,20 +108,20 @@ struct FeedbackRow: View {
             
             if item.status == .pending {
                 HStack(spacing: 8) {
-                    Button("Whitelist") {
+                    Button("加白") {
                         Task { await FeedbackStore.shared.whitelistAndResolve(id: item.id) }
                     }
                     .font(.caption)
                     .buttonStyle(.borderedProminent)
                     .tint(.green)
                     
-                    Button("Ignore") {
+                    Button("忽略") {
                         Task { await FeedbackStore.shared.ignore(id: item.id) }
                     }
                     .font(.caption)
                     .buttonStyle(.bordered)
                     
-                    Button("Report") {
+                    Button("上报") {
                         Task { await FeedbackStore.shared.reportUpstream(id: item.id) }
                     }
                     .font(.caption)
@@ -147,13 +147,23 @@ struct StatusBadge: View {
     }
     
     var body: some View {
-        Text(status.rawValue.replacingOccurrences(of: "_", with: " "))
+        Text(statusBadgeText)
             .font(.caption2)
             .padding(.horizontal, 8)
             .padding(.vertical, 2)
             .background(color.opacity(0.2))
             .foregroundColor(color)
             .cornerRadius(8)
+    }
+    
+    private var statusBadgeText: String {
+        switch status {
+        case .pending: return "待处理"
+        case .whitelisted: return "已加白"
+        case .ignored: return "已忽略"
+        case .reportedUpstream: return "已上报"
+        case .resolved: return "已解决"
+        }
     }
 }
 
@@ -167,45 +177,55 @@ struct AddFeedbackSheet: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Domain")) {
+                Section(header: Text("域名")) {
                     TextField("example.com", text: $domain)
                         .autocapitalization(.none)
                         .keyboardType(.URL)
                 }
                 
-                Section(header: Text("Category")) {
-                    Picker("Reason", selection: $category) {
+                Section(header: Text("误杀类型")) {
+                    Picker("原因", selection: $category) {
                         ForEach(FeedbackReasonCategory.allCases, id: \.self) { cat in
-                            Text(cat.rawValue.replacingOccurrences(of: "_", with: " ").capitalized)
+                            Text(categoryDisplayName(cat))
                                 .tag(cat)
                         }
                     }
                 }
                 
-                Section(header: Text("Scenario (Optional)")) {
+                Section(header: Text("具体场景（选填）")) {
                     TextEditor(text: $scenario)
                         .frame(minHeight: 80)
                 }
                 
                 Section {
-                    Text("Your feedback is stored locally and never uploaded to any server unless you choose to report upstream.")
+                    Text("你的反馈仅保存在本机，除非你主动选择「上报」，否则不会上传到任何服务器。")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
             }
-            .navigationTitle("Report False Positive")
+            .navigationTitle("报告误杀")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button("取消") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Submit") {
+                    Button("提交") {
                         onSubmit()
                     }
                     .disabled(domain.isEmpty)
                 }
             }
         }
+    }
+}
+
+/// 本地化误杀类型标签（rawValue 是 JSON 存储值，不可改动）
+func categoryDisplayName(_ category: FeedbackReasonCategory) -> String {
+    switch category {
+    case .normalWebsite: return "正常网站被拦截"
+    case .appFunctionBroken: return "应用功能异常"
+    case .paymentBanking: return "支付/银行类"
+    case .other: return "其他"
     }
 }

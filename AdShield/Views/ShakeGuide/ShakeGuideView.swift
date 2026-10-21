@@ -13,57 +13,57 @@ struct ShakeGuideView: View {
     
     private let guides: [AppGuide] = [
         AppGuide(
-            appName: "Weibo",
+            appName: "微博",
             steps: [
-                "Go to Me tab",
-                "Tap Settings (gear icon)",
-                "Tap Privacy Settings",
-                "Turn off 'Shake to open ad'"
+                "进入「我」的页面",
+                "点击「设置」（齿轮图标）",
+                "点击「隐私设置」",
+                "关闭「摇一摇广告」"
             ]
         ),
         AppGuide(
-            appName: "Zhihu",
+            appName: "知乎",
             steps: [
-                "Go to My tab",
-                "Tap Settings",
-                "Tap Privacy",
-                "Turn off 'Shake to open'"
+                "进入「我的」页面",
+                "点击「设置」",
+                "点击「隐私」",
+                "关闭「摇一摇打开」"
             ]
         ),
         AppGuide(
-            appName: "Bilibili",
+            appName: "哔哩哔哩",
             steps: [
-                "Go to My tab",
-                "Tap Settings",
-                "Tap Privacy Settings",
-                "Turn off 'Shake ad'"
+                "进入「我的」页面",
+                "点击「设置」",
+                "点击「隐私设置」",
+                "关闭「摇一摇广告」"
             ]
         ),
         AppGuide(
-            appName: "Taobao",
+            appName: "淘宝",
             steps: [
-                "Go to My Taobao",
-                "Tap Settings",
-                "Tap Privacy",
-                "Turn off 'Shake to interact'"
+                "进入「我的淘宝」",
+                "点击「设置」",
+                "点击「隐私」",
+                "关闭「摇一摇互动」"
             ]
         ),
         AppGuide(
-            appName: "JD",
+            appName: "京东",
             steps: [
-                "Go to My tab",
-                "Tap Settings",
-                "Tap General",
-                "Turn off 'Shake to open'"
+                "进入「我的」页面",
+                "点击「设置」",
+                "点击「通用」",
+                "关闭「摇一摇打开」"
             ]
         ),
         AppGuide(
-            appName: "Meituan",
+            appName: "美团",
             steps: [
-                "Go to My tab",
-                "Tap Settings",
-                "Tap Privacy Management",
-                "Turn off 'Shake ad'"
+                "进入「我的」页面",
+                "点击「设置」",
+                "点击「隐私管理」",
+                "关闭「摇一摇广告」"
             ]
         ),
     ]
@@ -72,28 +72,28 @@ struct ShakeGuideView: View {
         NavigationView {
             List {
                 Section {
-                    Text("While AdShield blocks ad content from loading, it cannot prevent the shake gesture itself from being detected by apps. Here is how to disable shake-to-ad in popular apps.")
+                    Text("AdShield 能阻止广告内容加载，但无法阻止应用检测摇一摇手势本身。以下是常见应用关闭「摇一摇开屏广告」的方法。")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
                 
-                Section(header: Text("App Guides")) {
+                Section(header: Text("应用指南")) {
                     ForEach(guides) { guide in
                         AppGuideRow(guide: guide)
                     }
                 }
                 
                 Section {
-                    Text("Note: App settings may change with updates. If a path is outdated, please check the app's latest settings menu.")
+                    Text("注意：应用设置可能随版本更新变化。如果路径已过时，请在应用的最新设置菜单中查找。")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
             }
-            .navigationTitle("Shake Ad Guide")
+            .navigationTitle("摇一摇广告指南")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") { dismiss() }
+                    Button("完成") { dismiss() }
                 }
             }
         }
