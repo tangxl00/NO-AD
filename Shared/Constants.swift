@@ -41,7 +41,16 @@ public enum SharedFileNames {
 
 /// Default anti-AD rule source.
 public enum RuleSourceDefaults {
+    /// 主源：anti-AD 官方域名（国内项目，但经 Cloudflare/GitHub Pages 后端分发，
+    /// 部分国内网络环境可能超时）。
     public static let domainsURL = "https://anti-ad.net/domains.txt"
+    /// 备用源：主源失败时按序依次尝试，全部失败才报错。
+    /// 1. jsDelivr CDN 镜像（官方 GitHub 仓库 @master 分支）
+    /// 2. GitHub raw（国内直连经常不可达，作为最后兜底）
+    public static let fallbackDomainsURLs: [String] = [
+        "https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/anti-ad-domains.txt",
+        "https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/anti-ad-domains.txt"
+    ]
     public static let name = "anti-AD"
     public static let updateIntervalHours: Int = 24
 }

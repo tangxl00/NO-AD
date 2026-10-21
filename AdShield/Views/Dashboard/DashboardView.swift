@@ -13,6 +13,9 @@ struct DashboardView: View {
     @StateObject private var logStore = BlockingLogStore.shared
     
     @State private var showingShakeGuide = false
+    @State private var isUpdatingRules = false
+    @State private var ruleUpdateMessage: String?
+    @State private var ruleUpdateFailed = false
     
     var body: some View {
         NavigationView {
@@ -132,6 +135,24 @@ struct DashboardView: View {
                     }
                 }
             }
+            
+            if isUpdatingRules {
+                HStack(spacing: 8) {
+                    ProgressView()
+                    Text("正在下载最新规则…")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+            }
+            
+            if let message = ruleUpdateMessage {
+                Text(message)
+                    .font(.caption)
+                    .foregroundColor(ruleUpdateFailed ? .red : .secondary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+            }
         }
         .padding()
         .background(Color(.systemGray6))
@@ -164,20 +185,45 @@ struct DashboardView: View {
     }
     
     private func updateRules() async {
-        // Trigger rule update
-        let downloader = RuleDownloader.shared
-        do {
-            if let result = try await downloader.download(from: RuleSourceDefaults.domainsURL) {
-                let compiler = RuleCompiler.shared
-                let compiled = try await compiler.compile(domains: result.domains, version: result.etag)
-                try await compiler.persist(rules: compiled)
-                
-                UserDefaults.standard.set(result.etag, forKey: UserDefaultsKeys.ruleVersion)
-                UserDefaults.standard.set(result.totalCount, forKey: UserDefaultsKeys.ruleEntryCount)
-                UserDefaults.standard.set(Date(), forKey: UserDefaultsKeys.lastRuleUpdateTime)
+        // 防止重复点击；下载期间 UI 显示转圈
+        guard !isUpdatingRules else { return }
+        isUpdatingRules = true
+        defer { isUpdatingRules = false }
+        ruleUpdateMessage = nil
+        
+        // 主源 + 备用源按序尝试，全部失败才向用户报错（不再静默吞掉）
+        var sources = [RuleSourceDefaults.domainsURL] + RuleSourceDefaults.fallbackDomainsURLs
+        var lastError: Error?
+        
+        while !sources.isEmpty {
+            let urlString = sources.removeFirst()
+            do {
+                if let result = try await RuleDownloader.shared.download(from: urlString) {
+                    let compiler = RuleCompiler.shared
+                    let compiled = try await compiler.compile(domains: result.domains, version: result.etag)
+                    try await compiler.persist(rules: compiled)
+                    
+                    UserDefaults.standard.set(result.etag, forKey: UserDefaultsKeys.ruleVersion)
+                    UserDefaults.standard.set(result.totalCount, forKey: UserDefaultsKeys.ruleEntryCount)
+                    UserDefaults.standard.set(Date(), forKey: UserDefaultsKeys.lastRuleUpdateTime)
+                    
+                    ruleUpdateFailed = false
+                    ruleUpdateMessage = "规则已更新：\(result.totalCount) 条域名"
+                } else {
+                    // HTTP 304：本地规则已是最新
+                    ruleUpdateFailed = false
+                    ruleUpdateMessage = "规则已是最新版本"
+                }
+                return
+            } catch {
+                lastError = error
+                // 尝试下一个源
             }
-        } catch {
-            print("Rule update failed: \(error)")
+        }
+        
+        ruleUpdateFailed = true
+        if let lastError = lastError {
+            ruleUpdateMessage = "规则更新失败：\(lastError.localizedDescription)"
         }
     }
 }

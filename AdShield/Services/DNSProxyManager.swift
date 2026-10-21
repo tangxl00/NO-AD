@@ -48,24 +48,33 @@ public final class DNSProxyManager: ObservableObject {
         
         let manager = NEDNSProxyManager.shared()
         
-        // Create provider configuration
-        let providerProtocol = NEDNSProxyProviderProtocol()
-        providerProtocol.providerBundleIdentifier = BundleIdentifiers.extensionTarget
-        providerProtocol.providerConfiguration = [:]
-        providerProtocol.serverAddress = "127.0.0.1"
-        providerProtocol.includeAllNetworks = false
-        
-        manager.providerProtocol = providerProtocol
-        manager.localizedDescription = "AdShield DNS 广告拦截"
-        
         do {
+            // Apple 标准调用顺序：load → modify → save → enable。
+            // 不先 loadFromPreferences 就直接 saveToPreferences 修改内存态配置，
+            // 系统可能判定配置为 stale（NEDNSProxyErrorDomain error 3）。
+            try await manager.loadFromPreferences()
+            
+            // Create provider configuration
+            let providerProtocol = NEDNSProxyProviderProtocol()
+            providerProtocol.providerBundleIdentifier = BundleIdentifiers.extensionTarget
+            providerProtocol.providerConfiguration = [:]
+            providerProtocol.serverAddress = "127.0.0.1"
+            providerProtocol.includeAllNetworks = false
+            
+            manager.providerProtocol = providerProtocol
+            manager.localizedDescription = "AdShield DNS 广告拦截"
             try await manager.saveToPreferences()
+            
+            // 对系统已保存的配置启用，而非内存副本
             try await manager.loadFromPreferences()
             manager.isEnabled = true
             try await manager.saveToPreferences()
+            
             isEnabled = true
+            lastError = nil
         } catch {
-            lastError = "开启 DNS 代理失败：\(error.localizedDescription)"
+            let nsError = error as NSError
+            lastError = "开启 DNS 代理失败（错误码 \(nsError.code)）：\(nsError.localizedDescription)"
             isEnabled = false
         }
     }
