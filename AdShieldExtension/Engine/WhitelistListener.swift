@@ -8,6 +8,7 @@
 
 import Foundation
 import Darwin
+import Darwin.notify
 
 protocol WhitelistListenerDelegate: AnyObject {
     func whitelistDidUpdate(_ items: [WhitelistItem])
@@ -60,7 +61,7 @@ final class WhitelistListener {
         
         // Set up dispatch source for notifications
         var notifyToken: Int32 = 0
-        let regStatus = notify_register_dispatch(notificationName, &notifyToken, DispatchQueue.global()) { [weak self] _ in
+        let regStatus = notify_register_dispatch(notificationName, &notifyToken, DispatchQueue.global()) { [weak self] (_: Int32) in
             self?.handleWhitelistChanged()
         }
         
