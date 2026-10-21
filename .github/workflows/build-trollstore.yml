@@ -112,6 +112,65 @@ jobs:
             echo "No standalone entitlements file in bundle (entitlements may be embedded in binary metadata)."
           fi
 
+      - name: Inject TrollStore entitlements (ldid)
+        # 背景：CODE_SIGNING_ALLOWED=NO 的产物不含 entitlements；TrollStore 安装时
+        # 若二进制自带 entitlements 会原样保留（见 TrollStore 官方 README），否则用
+        # 默认授权集重签 —— network-extension / App Group 均会丢失，真机上表现为
+        # NEDNSProxyErrorDomain error 3（开启 DNS 代理失败）。
+        # 因此在打包 IPA 前用 ldid 把 entitlements 伪签进主 App 与扩展二进制。
+        run: |
+          set -euo pipefail
+          ARCHIVE_APP="./build/${APP_NAME}.xcarchive/Products/Applications/${APP_NAME}.app"
+
+          # 1. 安装 ldid（Homebrew 预装在 macos-15 runner 上）
+          if ! brew install ldid; then
+            echo "::warning::brew install ldid 失败，IPA 将不含 TrollStore entitlements（回退为纯未签名行为）"
+            exit 0
+          fi
+
+          # 2. 写出 entitlements：容器 App 需要 network-extension(dns-proxy) + App Group；
+          #    扩展二进制注入同一份（与 App Store 分发时两个 target 的授权一致）。
+          cat > ./build/trollstore-app.entitlements <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>com.apple.developer.networking.network-extension</key>
+              <array>
+                  <string>dns-proxy</string>
+              </array>
+              <key>com.apple.security.application-groups</key>
+              <array>
+                  <string>group.com.YOUR_ORG.AdShield</string>
+              </array>
+          </dict>
+          </plist>
+          PLIST
+          cp ./build/trollstore-app.entitlements ./build/trollstore-extension.entitlements
+
+          # 3. 定位二进制并注入（主 App + DNS 扩展）
+          APP_BINARY="$ARCHIVE_APP/${APP_NAME}"
+          EXT_DIR="$ARCHIVE_APP/PlugIns/AdShieldExtension.appex"
+          if [ ! -d "$EXT_DIR" ]; then
+            EXT_DIR=$(dirname "$(find "$ARCHIVE_APP/PlugIns" -name "*.appex" -type d | head -1)")
+          fi
+          EXT_BINARY="$EXT_DIR/AdShieldExtension"
+          if [ ! -f "$EXT_BINARY" ]; then
+            EXT_BINARY=$(find "$EXT_DIR" -maxdepth 1 -type f -perm -111 ! -name "*.plist" | head -1)
+          fi
+
+          echo "Injecting entitlements into: $APP_BINARY"
+          ldid -S./build/trollstore-app.entitlements "$APP_BINARY"
+          echo "Injecting entitlements into: $EXT_BINARY"
+          ldid -S./build/trollstore-extension.entitlements "$EXT_BINARY"
+
+          echo ""
+          echo "=== Entitlements verification (ldid -e) ==="
+          echo "--- Main app ---"
+          ldid -e "$APP_BINARY"
+          echo "--- Extension ---"
+          ldid -e "$EXT_BINARY"
+
       - name: Package unsigned IPA
         run: |
           set -euo pipefail
@@ -125,18 +184,18 @@ jobs:
 
           # Package as IPA
           cd ./build
-          zip -r "${APP_NAME}-unsigned.ipa" Payload
+          zip -r "${APP_NAME}-trollstore-signed.ipa" Payload
           cd ..
 
           echo ""
-          echo "=== Unsigned IPA packaged successfully ==="
-          ls -lh "./build/${APP_NAME}-unsigned.ipa"
+          echo "=== TrollStore-ready IPA packaged successfully ==="
+          ls -lh "./build/${APP_NAME}-trollstore-signed.ipa"
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: AdShield-IPA-Unsigned
-          path: ./build/AdShield-unsigned.ipa
+          name: AdShield-IPA-TrollStore
+          path: ./build/AdShield-trollstore-signed.ipa
           retention-days: 90
 
       - name: Upload build logs (on failure)
