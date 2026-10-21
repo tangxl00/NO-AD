@@ -54,17 +54,17 @@ class DNSProxyProvider: NEDNSProxyProvider {
     
     // MARK: - DNS Query Handling
     
-    override func handleNewFlow(_ flow: NEAppProxyFlow) {
-        guard let dnsFlow = flow as? NEDNSProxyFlow else {
+    override func handleNewFlow(_ flow: NEAppProxyFlow) -> Bool {
+        guard let dnsFlow = flow as? NEAppProxyUDPFlow else {
             flow.closeReadWithError(nil)
             flow.closeWriteWithError(nil)
-            return
+            return false
         }
         
-        dnsFlow.readDatagrams { [weak self] datagrams, remoteEndpoints in
+        dnsFlow.readDatagrams { [weak self] datagrams, remoteEndpoints, error in
             guard let self = self else { return }
             
-            guard let datagrams = datagrams, let endpoints = remoteEndpoints else {
+            guard error == nil, let datagrams = datagrams, let endpoints = remoteEndpoints else {
                 dnsFlow.closeReadWithError(nil)
                 return
             }
@@ -76,9 +76,10 @@ class DNSProxyProvider: NEDNSProxyProvider {
                 self.processDNSQuery(datagram: datagram, endpoint: endpoint, flow: dnsFlow)
             }
         }
+        return true
     }
     
-    private func processDNSQuery(datagram: Data, endpoint: NWEndpoint, flow: NEDNSProxyFlow) {
+    private func processDNSQuery(datagram: Data, endpoint: NWEndpoint, flow: NEAppProxyUDPFlow) {
         // Parse DNS query to extract domain
         guard let queryDomain = DNSParser.extractQueryDomain(from: datagram) else {
             // Forward upstream if we can't parse
@@ -94,7 +95,7 @@ class DNSProxyProvider: NEDNSProxyProvider {
         
         // Check user custom blacklist
         if filterEngine?.isUserBlacklisted(queryDomain) == true {
-            sendBlockResponse(flow: flow, originalDatagram: datagram)
+            sendBlockResponse(flow: flow, originalDatagram: datagram, endpoint: endpoint)
             return
         }
         
@@ -102,7 +103,7 @@ class DNSProxyProvider: NEDNSProxyProvider {
         if filterEngine?.mayBeBlocked(queryDomain) == true {
             // Secondary confirmation with full hash set
             if filterEngine?.isConfirmedBlocked(queryDomain) == true {
-                sendBlockResponse(flow: flow, originalDatagram: datagram)
+                sendBlockResponse(flow: flow, originalDatagram: datagram, endpoint: endpoint)
                 return
             }
         }
@@ -111,13 +112,13 @@ class DNSProxyProvider: NEDNSProxyProvider {
         upstreamForwarder?.forward(datagram: datagram, endpoint: endpoint, flow: flow)
     }
     
-    private func sendBlockResponse(flow: NEDNSProxyFlow, originalDatagram: Data) {
+    private func sendBlockResponse(flow: NEAppProxyUDPFlow, originalDatagram: Data, endpoint: NWEndpoint) {
         guard let response = DNSParser.buildNXDOMAINResponse(for: originalDatagram) else {
             flow.closeWriteWithError(nil)
             return
         }
         
-        flow.writeDatagrams([response]) { error in
+        flow.writeDatagrams([response], sentBy: [endpoint]) { error in
             if let error = error {
                 print("Failed to write block response: \(error)")
             }
