@@ -7,6 +7,7 @@
 
 import Foundation
 import Darwin
+import Darwin.notify
 
 @MainActor
 public final class WhitelistManager: ObservableObject {
