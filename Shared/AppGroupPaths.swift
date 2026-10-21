@@ -14,10 +14,17 @@ public final class AppGroupPaths {
     private let containerURL: URL
     
     private init() {
-        guard let url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: AppGroup.identifier) else {
-            fatalError("Failed to access App Group container: \(AppGroup.identifier). Ensure App Group capability is configured.")
+        if let url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: AppGroup.identifier) {
+            self.containerURL = url
+        } else {
+            // App Group unavailable (e.g., unsigned IPA installed via TrollStore, where the
+            // re-signing entitlement set does not include our App Group). Fall back to the
+            // app's own container so the app still launches; cross-process sharing with the
+            // DNS extension is degraded until a real App Group is provisioned.
+            print("AppGroupPaths: App Group unavailable (\(AppGroup.identifier)), falling back to local container")
+            let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            self.containerURL = support.appendingPathComponent("AdShieldShared", isDirectory: true)
         }
-        self.containerURL = url
     }
     
     /// Root URL of the App Group container.
