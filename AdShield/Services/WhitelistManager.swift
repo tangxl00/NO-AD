@@ -7,7 +7,6 @@
 
 import Foundation
 import Darwin
-import Darwin.notify
 
 @MainActor
 public final class WhitelistManager: ObservableObject {
@@ -171,11 +170,16 @@ public final class WhitelistManager: ObservableObject {
     }
     
     private func notifyExtension() {
-        let notificationName = IPCNotification.whitelistChanged
-        let result = notify_post(notificationName)
-        if result != NOTIFY_STATUS_OK {
-            print("darwin_notify_post failed: \(result)")
-        }
+        // Darwin notify via CoreFoundation's Darwin notify center
+        // (notify.h is not visible to Swift on iOS; CFNotificationCenter is the supported path)
+        let name = CFNotificationName(rawValue: IPCNotification.whitelistChanged as CFString)
+        CFNotificationCenterPostNotification(
+            CFNotificationCenterGetDarwinNotifyCenter(),
+            name,
+            nil,
+            nil,
+            true
+        )
     }
     
     // MARK: - Built-in Defaults
