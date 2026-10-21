@@ -74,7 +74,7 @@ public final class DNSProxyManager: ObservableObject {
             lastError = nil
         } catch {
             let nsError = error as NSError
-            lastError = "开启 DNS 代理失败（错误码 \(nsError.code)）：\(nsError.localizedDescription)"
+            lastError = "开启 DNS 代理失败（\(nsError.domain) 错误码 \(nsError.code)）：\(nsError.localizedDescription)"
             isEnabled = false
         }
     }
