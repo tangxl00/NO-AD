@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import UIKit
 
 /// Status lifecycle for a false-positive feedback item.
 public enum FeedbackStatus: String, Codable, CaseIterable {
