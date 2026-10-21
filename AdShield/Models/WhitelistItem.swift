@@ -6,6 +6,9 @@
 //
 
 import Foundation
+#if canImport(CryptoKit)
+import CryptoKit
+#endif
 
 /// A single whitelisted domain entry.
 public struct WhitelistItem: Codable, Identifiable, Equatable {
@@ -68,7 +71,6 @@ public struct WhitelistSnapshot: Codable {
         var hash = Data()
         #if canImport(CryptoKit)
         if #available(iOS 13.0, *) {
-            import CryptoKit
             let digest = SHA256.hash(data: data)
             hash = Data(digest)
         } else {
