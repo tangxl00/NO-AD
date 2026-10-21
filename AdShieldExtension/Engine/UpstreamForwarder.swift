@@ -22,7 +22,7 @@ final class UpstreamForwarder {
         }
     }
     
-    func forward(datagram: Data, endpoint: NWEndpoint, flow: NEDNSProxyFlow) {
+    func forward(datagram: Data, endpoint: NWEndpoint, flow: NEAppProxyUDPFlow) {
         // In a production implementation, this would:
         // 1. Forward the DNS query to the system's configured DNS server
         // 2. Receive the response
@@ -34,7 +34,7 @@ final class UpstreamForwarder {
         // Simplified: write back a "server failure" response to avoid hanging
         // In production, replace with actual upstream forwarding logic
         if let fallbackResponse = DNSParser.buildServerFailureResponse(for: datagram) {
-            flow.writeDatagrams([fallbackResponse]) { _ in }
+            flow.writeDatagrams([fallbackResponse], sentBy: [endpoint]) { _ in }
         }
     }
 }
