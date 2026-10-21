@@ -7,6 +7,7 @@
 
 import Foundation
 import Darwin
+import Combine
 
 @MainActor
 public final class WhitelistManager: ObservableObject {
