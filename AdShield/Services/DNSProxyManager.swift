@@ -7,6 +7,7 @@
 
 import Foundation
 import NetworkExtension
+import Combine
 
 @MainActor
 public final class DNSProxyManager: ObservableObject {
