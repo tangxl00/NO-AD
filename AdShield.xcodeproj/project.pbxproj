@@ -610,10 +610,6 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = AdShieldExtension/Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSExtension = {
-					NSExtensionPointIdentifier = "com.apple.networkextension.dns-proxy";
-					NSExtensionPrincipalClass = "AdShieldExtension.DNSProxyProvider";
-				};
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -639,10 +635,6 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = AdShieldExtension/Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSExtension = {
-					NSExtensionPointIdentifier = "com.apple.networkextension.dns-proxy";
-					NSExtensionPrincipalClass = "AdShieldExtension.DNSProxyProvider";
-				};
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
