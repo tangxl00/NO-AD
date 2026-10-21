@@ -21,6 +21,7 @@
 		E6CB9C96F6F545888CAB44DD /* BlockingLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6CB9C96F6F545888CAB44DE; };
 		C83E2DF02D144AADBDE3597E /* FeedbackItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = C83E2DF02D144AADBDE3597F; };
 		1348A244CAEC4AA6BAA412CC /* WhitelistItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1348A244CAEC4AA6BAA412CD; };
+		E7A1F3B5C9D28460ABCD0123 /* WhitelistItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1348A244CAEC4AA6BAA412CD; };
 		B377C482C05C41E5AC30A3D2 /* RuleSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = B377C482C05C41E5AC30A3D3; };
 		8CEBA5955B2E426193B95439 /* DNSProxyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEBA5955B2E426193B9543A; };
 		BFE6AEBAEFCD4EE98D4D67BB /* RuleDownloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFE6AEBAEFCD4EE98D4D67BC; };
@@ -412,6 +413,7 @@
 				0C27BA02DEF24ED59F51E701 /* WhitelistListener.swift in Sources */,
 				C2D1D913059B400CA2C28338 /* DNSParser.swift in Sources */,
 				33FD97D45F4748B4B950EC9E /* UpstreamForwarder.swift in Sources */,
+				E7A1F3B5C9D28460ABCD0123 /* WhitelistItem.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
