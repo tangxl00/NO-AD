@@ -6,6 +6,9 @@
 //
 
 import Foundation
+#if canImport(CryptoKit)
+import CryptoKit
+#endif
 
 public actor RuleCompiler {
     
@@ -94,7 +97,6 @@ public actor RuleCompiler {
         // SHA-256 checksum computation
         #if canImport(CryptoKit)
         if #available(iOS 13.0, *) {
-            import CryptoKit
             let digest = SHA256.hash(data: data)
             return Data(digest).map { String(format: "%02x", $0) }.joined()
         }
