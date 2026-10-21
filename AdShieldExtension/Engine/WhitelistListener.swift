@@ -8,7 +8,6 @@
 
 import Foundation
 import Darwin
-import Darwin.notify
 
 protocol WhitelistListenerDelegate: AnyObject {
     func whitelistDidUpdate(_ items: [WhitelistItem])
@@ -22,6 +21,7 @@ final class WhitelistListener {
     private var pollTimer: Timer?
     private var lastVersion: UInt64 = 0
     private let pollInterval: TimeInterval = 5.0
+    private var observerPointer: UnsafeMutableRawPointer?
     
     private let paths = AppGroupPaths.shared
     
@@ -34,6 +34,16 @@ final class WhitelistListener {
         pollTimer?.invalidate()
         pollTimer = nil
         filePresenter = nil
+        if let pointer = observerPointer {
+            let name = CFNotificationName(rawValue: IPCNotification.whitelistChanged as CFString)
+            CFNotificationCenterRemoveObserver(
+                CFNotificationCenterGetDarwinNotifyCenter(),
+                pointer,
+                name,
+                nil
+            )
+        }
+        observerPointer = nil
     }
     
     // MARK: - Listening
@@ -50,24 +60,28 @@ final class WhitelistListener {
     }
     
     private func registerDarwinNotify() {
-        let notificationName = IPCNotification.whitelistChanged
-        let token = UnsafeMutablePointer<Int32>.allocate(capacity: 1)
+        // Darwin notify via CoreFoundation's Darwin notify center
+        // (notify.h is not visible to Swift on iOS; CFNotificationCenter is the supported path)
+        let name = CFNotificationName(rawValue: IPCNotification.whitelistChanged as CFString)
         
-        let status = notify_register_check(notificationName, token)
-        guard status == NOTIFY_STATUS_OK else {
-            print("Failed to register darwin notify: \(status)")
-            return
+        // CFNotificationCallback is a C function pointer and cannot capture context:
+        // pass self through the observer pointer and unpack it in the callback.
+        observerPointer = Unmanaged<WhitelistListener>.passUnretained(self).toOpaque()
+        
+        let callback: CFNotificationCallback = { _, observer, _, _, _ in
+            guard let observer else { return }
+            let listener = Unmanaged<WhitelistListener>.fromOpaque(observer).takeUnretainedValue()
+            listener.handleWhitelistChanged()
         }
         
-        // Set up dispatch source for notifications
-        var notifyToken: Int32 = 0
-        let regStatus = notify_register_dispatch(notificationName, &notifyToken, DispatchQueue.global()) { [weak self] (_: Int32) in
-            self?.handleWhitelistChanged()
-        }
-        
-        if regStatus != NOTIFY_STATUS_OK {
-            print("notify_register_dispatch failed: \(regStatus)")
-        }
+        CFNotificationCenterAddObserver(
+            CFNotificationCenterGetDarwinNotifyCenter(),
+            observerPointer,
+            callback,
+            name.rawValue,
+            nil,
+            .deliverImmediately
+        )
     }
     
     private func setupFilePresenter() {
